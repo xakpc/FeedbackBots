@@ -1,4 +1,5 @@
 using System;
+using Xakpc.FeedbackBots.Helpers;
 using Xakpc.FeedbackBots.Services;
 
 namespace Xakpc.FeedbackBots.StateMachine
@@ -16,10 +17,10 @@ namespace Xakpc.FeedbackBots.StateMachine
             {
                 case "/start":
                     return new StateAction(Response: new MasterBotResponse(@"Welcome to a Feedbacks Master Bot.
-Press **Menu** to show availible commands:
+Press Menu to show availible commands:
 /add - Attach client bot
 /remove - Remove client bot
-/qr - Get QR code of client bot", Markdown: true), 
+/qr - Get QR code of client bot"), 
                         Activity: nameof(MasterBotActivityFunctions.ActivityRegisterMasterUser));
                 case "/add":
                     _context.TransitionTo(new AddState());
