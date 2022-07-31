@@ -145,7 +145,7 @@ namespace Xakpc.FeedbackBots.Services
 
         public Task<string> GetClientBotToken(long clientBotChatId)
         {
-            var sql = "select DISTINCT (Token) from ClientBots join ClientBotsMessageReference on ClientBotChatId = @ClientBotChatId;";
+            var sql = "SELECT Token from ClientBots where ChatId = @ClientBotChatId;";
             return _connection.QuerySingleAsync<string>(sql, new { ClientBotChatId = clientBotChatId });
         }
 

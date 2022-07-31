@@ -156,7 +156,7 @@ namespace Xakpc.FeedbackBots.Services
             var botClient = new TelegramBotClient(_masterToken);
             var uri = EnvironmentHelper.GetEnvironmentVariable("Uri");
             var key = EnvironmentHelper.GetEnvironmentVariable("ClientId");
-            return botClient.SetWebhookAsync($"https://{uri}/api/webhook?clientid={key}");
+            return botClient.SetWebhookAsync($"https://{uri}/api/webhook?code={key}");
         }
 
         internal Task Setup(long id, string botToken)
@@ -164,7 +164,7 @@ namespace Xakpc.FeedbackBots.Services
             var botClient = new TelegramBotClient(botToken);
             var uri = EnvironmentHelper.GetEnvironmentVariable("Uri");
             var key = EnvironmentHelper.GetEnvironmentVariable("ClientId");
-            return botClient.SetWebhookAsync($"https://{uri}/api/{id}/{botToken}/webhook?clientid={key}");
+            return botClient.SetWebhookAsync($"https://{uri}/api/{id}/{botToken}/webhook?code={key}");
         }
 
         public Task UnSetup(string botToken)
