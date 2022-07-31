@@ -47,7 +47,7 @@ namespace Xakpc.FeedbackBots
             await _database.AddUserTokenAsync(message.From.Id, botToken, bot.Id, bot.Username);
             await _telegramService.Setup(message.From.Id, botToken);
 
-            return new MasterBotResponse($"Chatbot {bot.Username} attached as a client bot");
+            return new MasterBotResponse($"Chatbot @{bot.Username} attached as a client bot");
         }
 
         [FunctionName(nameof(ActivityDoRemove))]
@@ -59,7 +59,7 @@ namespace Xakpc.FeedbackBots
             var bot = await _telegramService.GetBot(botToken);
             await _telegramService.UnSetup(botToken);
 
-            return new MasterBotResponse($"Chatbot {bot.Username} detached as client bot");
+            return new MasterBotResponse($"Chatbot @{bot.Username} detached as client bot");
         }
 
         [FunctionName(nameof(ActivityCreateQrCode))]
