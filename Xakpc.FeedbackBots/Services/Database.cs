@@ -1,8 +1,8 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Dapper;
+using MySql.Data.MySqlClient;
 using System;
-using System.Text;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Dapper;
 
 namespace Xakpc.FeedbackBots.Services
 {
@@ -13,7 +13,7 @@ namespace Xakpc.FeedbackBots.Services
 
         Task<string> GetClientBotToken(long clientBotChatId);
         Task<string> GetClientBotName(long fromId);
-        Task<long> GetMasterBotChatId(string clientToken);        
+        Task<long> GetMasterBotChatId(string clientToken);
         Task<long> GetMasterBotFromId(string clientToken);
         Task<string> GetMasterBotToken(long fromId);
 
@@ -157,6 +157,45 @@ namespace Xakpc.FeedbackBots.Services
         public Task ConsumeMessage(long fromId)
         {
             return Task.CompletedTask;
+        }
+        
+        public async Task BlockUser(long clientBotChatId, long originalFromId)
+        {
+            var masterBot = new BlockedUser
+            {
+                OriginalFromId = originalFromId,
+                ClientBotChatId = clientBotChatId
+            };
+
+            string sqlQuery = "INSERT IGNORE INTO BlockedUsers (OriginalFromId, ClientBotChatId) VALUES(@OriginalFromId, @ClientBotChatId)";
+            await _connection.ExecuteAsync(sqlQuery, masterBot);
+        }
+
+        public Task<IEnumerable<int>> GetAllMessages(long clientBotChatId, long originalFromId)
+        {
+            var sql = "SELECT ResendMessageId FROM ClientBotsMessageReference WHERE ClientBotChatId = @ClientBotChatId AND OriginalFromId= @OriginalFromId;";
+            return _connection.QueryAsync<int>(sql, new { ClientBotChatId = clientBotChatId, OriginalFromId = originalFromId });
+        }
+        
+        public Task<string> GetFileId(long fromId)
+        {
+            var sql = "SELECT InviteFileId FROM ClientBots WHERE MasterFromId = @FromId;";
+            return _connection.QuerySingleOrDefaultAsync<string>(sql, new { FromId = fromId });
+        }
+
+        public Task SaveFileId(long fromId, string fileId)
+        {
+            var sql = "UPDATE ClientBots SET InviteFileId = @FileId WHERE MasterFromId = @FromId;";
+            return _connection.ExecuteAsync(sql, new { FileId = fileId, FromId = fromId });
+        }
+        
+        public async Task<bool> UserBlocked(long originalFromId, string clientToken)
+        {
+            var chatId = await GetMasterBotChatId(clientToken);
+
+            var sql = "SELECT COUNT(Id) FROM BlockedUsers WHERE OriginalFromId = @OriginalFromId AND ClientBotChatId = @ChatId";
+            var count = await _connection.ExecuteScalarAsync<int>(sql, new { ChatId = chatId, OriginalFromId = originalFromId });
+            return count > 0;
         }
     }
 }

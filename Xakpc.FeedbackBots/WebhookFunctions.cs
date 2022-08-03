@@ -76,36 +76,6 @@ namespace Xakpc.FeedbackBots
                 log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
             }
 
-            // Recieved callback, perform action for it
-            if (update.Type == UpdateType.CallbackQuery && update.CallbackQuery != null)
-            {
-                try
-                {
-                    var parts = update.CallbackQuery.Data.Split(':');
-
-                    // remove callback message                
-                    await _masterBotService.AnswerCallback(update.CallbackQuery.Id);
-
-                    //if (parts[0].Equals("reply", StringComparison.OrdinalIgnoreCase))
-                    //{
-                    //    var messageReferenceId = long.Parse(parts[1]);
-
-                    //    // set user state to responsing
-                    //    await PromptReply(durableClient, update.CallbackQuery.From.Id, update.CallbackQuery.Message, messageReferenceId);
-                    //}
-
-                    if (parts[0].Equals("block", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // todo
-                    }
-                }
-                catch (ApiRequestException ex) when (ex.Message.Contains("query is too old", StringComparison.OrdinalIgnoreCase))
-                {
-                    log.LogWarning(ex.Message);
-                    return new OkResult();
-                }
-            }
-
             return new OkResult();
         }
 
@@ -115,10 +85,16 @@ namespace Xakpc.FeedbackBots
             long clientId, string token,
             ILogger log)
         {
-            log.LogInformation("ClientBotWebhook function processed a webhook.");
+            log.LogInformation("ClientBotWebhook function processed a webhook from {clientId}/{token}.", clientId, token);
 
             // Function input comes from the request content.            
             var update = await GetUpdateFrom(req);
+
+            if (await _database.UserBlocked(update.Message.From.Id, token))
+            {
+                log.LogInformation("User {FromId} is blocked", update.Message.From);
+                return new OkResult();
+            }
 
             // Recieved message, forward it to master bot
             if (update.Message != null)

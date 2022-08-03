@@ -27,6 +27,8 @@ Press Menu to show availible commands:
                     return new StateAction(Response: new MasterBotResponse("Create client-facing chatbot through @BotFather and send me generated UserToken"));
                 case "/remove":
                     return new StateAction(Activity: nameof(MasterBotActivityFunctions.ActivityDoRemove));
+                case "/block":
+                    return new StateAction(Response: new MasterBotResponse("Reply with /block command to a message to block user. Every messages from this user will be deleted, and he will not be able to write you again."));
                 case "/qr":
                     return new StateAction(Activity: nameof(MasterBotActivityFunctions.ActivityCreateQrCode));
             }

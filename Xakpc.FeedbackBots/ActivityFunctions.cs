@@ -73,11 +73,20 @@ namespace Xakpc.FeedbackBots
             var qrCode = new PngByteQRCode(qrCodeData);
             byte[] qrCodeAsPngByteArr = qrCode.GetGraphic(20);
 
-            var fileId = await _telegramService.UploadFile(message.From.Id, botName, qrCodeAsPngByteArr);
+            string fileId = await _database.GetFileId(message.From.Id);
+            
+            if (fileId != null)
+            {
+                fileId = await _database.GetFileId(message.From.Id);
+                return new MasterBotResponse(string.Empty, PhotoId: fileId);
+            }
+            else
+            {
+                fileId = await _telegramService.UploadSendPhoto(message.From.Id, botName, qrCodeAsPngByteArr);
+                await _database.SaveFileId(message.From.Id, fileId);
+            }
 
-            // todo: save this fileId to resend image without building it as new
-
-            return new MasterBotResponse(string.Empty, PhotoId: fileId);
+            return new MasterBotResponse(string.Empty);
         }
 
         /// <summary>
@@ -116,6 +125,32 @@ namespace Xakpc.FeedbackBots
 
             // no answer needed
             return default;
+        }
+
+        /// <summary>
+        /// Response to client bot message from the master bot.
+        /// </summary>
+        [FunctionName(nameof(BlockUser))]
+        public async Task<MasterBotResponse> BlockUser(
+            [ActivityTrigger] Message message,
+            [DurableClient] IDurableEntityClient client,
+            ILogger log)
+        {
+            var fromId = message.From.Id;
+
+            // get client chat messageRef and botToken
+            var entityId = new EntityId(nameof(DurableUserState), fromId.ToString());
+            var userState = await client.ReadEntityStateAsync<DurableUserState>(entityId);
+            var messageRef = await _database.GetClientMessageReference(
+                messageReferenceId: userState.EntityState.MessageReferenceId);
+            var botToken = await _database.GetClientBotToken(messageRef.ClientBotChatId);
+
+            // send responce to a client chat
+            await _database.BlockUser(messageRef.ClientBotChatId, messageRef.OriginalFromId);
+            await _telegramService.BlockAsync(fromId, messageRef.ClientBotChatId, messageRef.OriginalFromId);
+
+            //return new MasterBotResponse("User blocked");
+            return default;            
         }
     }
 }

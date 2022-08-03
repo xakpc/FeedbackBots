@@ -9,7 +9,9 @@ namespace Xakpc.FeedbackBots.StateMachine
 
         public override StateAction GetAction(string messageText)
         {
-            if (messageText.Equals("/cancel", StringComparison.OrdinalIgnoreCase))
+            var message = messageText.Trim();
+
+            if (message.Equals("/cancel", StringComparison.OrdinalIgnoreCase))
             {
                 _context.TransitionTo(new MainState());
                 return new StateAction(new MasterBotResponse("Cancelled"));
@@ -18,7 +20,12 @@ namespace Xakpc.FeedbackBots.StateMachine
             var ms = new MainState();
             _context.TransitionTo(ms);
 
-            if (messageText.StartsWith("/"))
+            if (message.StartsWith("/block"))
+            {
+                return new StateAction(Activity: nameof(MasterBotActivityFunctions.BlockUser));
+            }
+
+            if (message.StartsWith("/"))
             {
                 return ms.GetAction(messageText);
             }

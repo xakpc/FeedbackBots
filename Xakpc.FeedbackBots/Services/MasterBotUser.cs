@@ -57,4 +57,25 @@ namespace Xakpc.FeedbackBots.Services
         /// </summary>
         public long ClientBotChatId { get; set; }
     }
+
+    /// <summary>
+    /// Blocked user
+    /// </summary>
+    public class BlockedUser
+    {
+        /// <summary>
+        /// PK
+        /// </summary>
+        public long Id { get; set; }
+
+        /// <summary>
+        /// Id of the user in the client chat
+        /// </summary>
+        public long OriginalFromId { get; set; }
+
+        /// <summary>
+        /// FK: ClientBots
+        /// </summary>
+        public long ClientBotChatId { get; set; }
+    }
 }

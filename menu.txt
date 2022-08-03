@@ -1,0 +1,4 @@
+add - Attach client bot
+remove - Remove client bot
+block - Block user and delete all his messages
+qr - Get QR code of client bot

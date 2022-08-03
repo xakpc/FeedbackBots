@@ -135,12 +135,24 @@ namespace Xakpc.FeedbackBots.Services
             Console.WriteLine(LogHelper.MessageVerbose(sentMessage));
         }
 
-        public async Task BanAsync(long chatId, Message message)
+        public async Task BlockAsync(long fromId, long clientBotChatId, long originalFromId)
         {
-            var botClient = new TelegramBotClient(_masterToken);
+            // get all messages 
+            var messagesToDelete = await _database.GetAllMessages(clientBotChatId, originalFromId);
 
-            // todo
-            throw new NotImplementedException();
+            // delete all messages
+            foreach (var messageId in messagesToDelete)
+            {
+                try
+                {
+                    await RemoveMessage(fromId, messageId);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError(ex.ToString()); // eat exception and move on. todo - make it db exception.
+                    continue;
+                }                
+            }
         }
 
         #region Webhook Setup
@@ -222,17 +234,17 @@ namespace Xakpc.FeedbackBots.Services
             return botClient.SendChatActionAsync(id, Telegram.Bot.Types.Enums.ChatAction.Typing);
         }
 
-        internal async Task<string> UploadFile(long fromId, string botName, byte[] qrCodeAsPngByteArr)
+        internal async Task<string> UploadSendPhoto(long fromId, string botName, byte[] qrCodeAsPngByteArr)
         {
             var botClient = new TelegramBotClient(_masterToken);
-
+            
             await using Stream stream = new MemoryStream(qrCodeAsPngByteArr);
-            Message message = await botClient.SendDocumentAsync(
+            Message message = await botClient.SendPhotoAsync(
                 chatId: fromId,
-                document: new InputOnlineFile(content: stream, fileName: $"{botName}.png"),
+                photo: new InputOnlineFile(content: stream, fileName: $"{botName}.png"),
                 caption: $"Invite QR Code for @{botName}");
 
-            return message.Document.FileId;
+            return message.Photo[0].FileId;
         }
         #endregion
     }
